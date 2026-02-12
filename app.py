@@ -20,7 +20,10 @@ app.add_middleware(
 
 BASE_DIR = Path(__file__).resolve().parent
 QUESTIONS_FILE = BASE_DIR / "questions.json"
-ANSWERS_FILE = BASE_DIR / "answers.json"
+
+# Vercel serverless has a read-only filesystem except /tmp
+_is_vercel = bool(os.environ.get("VERCEL"))
+ANSWERS_FILE = Path("/tmp/answers.json") if _is_vercel else BASE_DIR / "answers.json"
 
 
 def load_questions() -> list[dict]:
