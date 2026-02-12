@@ -158,6 +158,28 @@
     .btn:hover { background: var(--primary-hover); }
     .btn:disabled { background: #ccc; cursor: default; }
 
+    .btn-next {
+      display: none;
+      width: 100%;
+      padding: 0.85rem;
+      margin-top: 0.5rem;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--accent);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-next:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-next.show { display: block; }
+
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -246,6 +268,7 @@
         <p class="question-text" id="today-question">Loading...</p>
         <textarea id="answer-input" placeholder="here, write your thoughts..."></textarea>
         <button class="btn" id="save-btn" onclick="submitAnswer()">Save</button>
+        <button class="btn-next" id="next-btn" onclick="loadNextQuestion()">Next Question</button>
       </div>
     </div>
 
@@ -283,24 +306,35 @@
 
     // --- Today ---
     let todayData = null;
+    let currentOffset = 0;
 
-    async function loadToday() {
+    async function loadToday(offset = 0) {
       try {
-        const res = await fetch(`${API}/api/today`);
+        const res = await fetch(`${API}/api/today?offset=${offset}`);
         todayData = await res.json();
+        currentOffset = offset;
 
         document.getElementById("today-date").textContent = todayData.date;
         document.getElementById("today-category").textContent = todayData.question.category;
         document.getElementById("today-question").textContent = todayData.question.question;
+        document.getElementById("answer-input").value = "";
+        document.getElementById("save-btn").textContent = "Save";
+        document.getElementById("next-btn").classList.remove("show");
 
         if (todayData.existing_answer) {
           document.getElementById("answer-input").value = todayData.existing_answer.answer;
           document.getElementById("save-btn").textContent = "Update";
+          document.getElementById("next-btn").classList.add("show");
         }
       } catch (e) {
         document.getElementById("today-question").textContent =
           "Failed to load the question. Please try again later.";
       }
+    }
+
+    function loadNextQuestion() {
+      loadToday(currentOffset + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     async function submitAnswer() {
@@ -327,6 +361,7 @@
         if (res.ok) {
           showToast(data.message);
           btn.textContent = "Update";
+          document.getElementById("next-btn").classList.add("show");
         } else {
           showToast(data.detail || "Error occurred.");
         }

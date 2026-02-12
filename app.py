@@ -54,9 +54,11 @@ class AnswerRequest(BaseModel):
 
 
 @app.get("/api/today")
-def today_question():
-    """Return today's reflection question."""
-    q = get_today_question()
+def today_question(offset: int = 0):
+    """Return today's reflection question, with optional offset for follow-up questions."""
+    questions = load_questions()
+    day_index = date.today().timetuple().tm_yday % len(questions)
+    q = questions[(day_index + offset) % len(questions)]
     today_str = date.today().isoformat()
     answers = load_answers()
     existing = next(
@@ -67,6 +69,7 @@ def today_question():
         "date": today_str,
         "question": q,
         "existing_answer": existing,
+        "offset": offset,
     }
 
 
